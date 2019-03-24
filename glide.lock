@@ -1,5 +1,5 @@
-hash: 27dd0eb78697eacf4219ef85b5738fdc8771342ba694a6878d481db91c8279aa
-updated: 2019-03-17T21:16:01.426643+03:00
+hash: 5ce66bc19c79d239d70b83e5cc4b8c372ba4ae2c4eba94ab376c3546a1ca5f78
+updated: 2019-03-22T14:14:22.327217+03:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 8991bc29aa16c548c550c7ff78260e27b9ab7c73
@@ -9,10 +9,19 @@ imports:
   version: 06ea1031745cb8b3dab3f6a236daf2b0aa468b7e
 - name: github.com/golang-migrate/migrate
   version: 5e96539f55495f6fa80240037db6cb1886a99b89
+  subpackages:
+  - database
+  - database/postgres
+  - source
+  - source/file
 - name: github.com/gorilla/mux
   version: a7962380ca08b5a188038c69871b8d3fbdf31e89
 - name: github.com/lib/pq
   version: 4ded0e9383f75c197b3a2aaa6d590ac52df6fd79
+  subpackages:
+  - oid
+- name: github.com/sirupsen/logrus
+  version: dae0fa8d5b0c810a8ab733fbd5510c7cae84eca4
 - name: github.com/subosito/gotenv
   version: 69b5b6104433beb2cb9c3ce00bdadf3c7c2d3f34
 testImports: []
