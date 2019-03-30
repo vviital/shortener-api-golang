@@ -14,19 +14,19 @@ func ConnectPostgreSQL() *sql.DB {
 	pgUrl, err := pq.ParseURL(url)
 
 	if err != nil {
-		log.Fatalln(err)
+		log.Panicln(err)
 	}
 
 	db, err := sql.Open("postgres", pgUrl)
 
 	if err != nil {
-		log.Fatalln(err)
+		log.Panicln(err)
 	}
 
 	err = db.Ping()
 
 	if err != nil {
-		log.Fatalln(err)
+		log.Panicln(err)
 	}
 
 	return db

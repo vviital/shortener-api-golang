@@ -9,25 +9,96 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
+// LinksRepositoryInterface interface
+type LinksRepositoryInterface interface {
+	CountByUser(models.User) (int64, error)
+	CountByUserWithContext(context.Context, models.User) (int64, error)
+	Create(models.Link) (*models.Link, error)
+	CreateWithContext(context.Context, models.Link) (*models.Link, error)
+	Delete(models.Link) error
+	DeleteWithContext(context.Context, models.Link) error
+	FindAllByUser(models.User, options.Options) ([]*models.Link, error)
+	FindAllByUserWithContext(context.Context, models.User, options.Options) ([]*models.Link, error)
+	FindByID(models.Link) (*models.Link, error)
+	FindByIDWithContext(context.Context, models.Link) (*models.Link, error)
+}
+
 // LinkRepository type represents to work with usages
 type LinkRepository BaseRepository
 
+// NewSQLLinkRepository creates LinkRepository repository
+func NewSQLLinkRepository(db *sql.DB) LinksRepositoryInterface {
+	return &LinkRepository{db: db}
+}
+
+// CountByUser return total count of user's links
+func (repository *LinkRepository) CountByUser(user models.User) (int64, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	return repository.CountByUserWithContext(ctx, user)
+}
+
+// CountByUserWithContext return total count of user's links
+func (repository *LinkRepository) CountByUserWithContext(ctx context.Context, user models.User) (int64, error) {
+	var count int64
+	statement := "select count(*) from links where user_id = $1"
+	err := repository.db.QueryRowContext(ctx, statement, user.ID).Scan(&count)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 // Create saves user's link to the database
-func (l *LinkRepository) Create(ctx context.Context, link models.Link) (models.Link, error) {
+func (repository *LinkRepository) Create(link models.Link) (*models.Link, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	return repository.CreateWithContext(ctx, link)
+}
+
+// CreateWithContext saves user's link to the database
+func (repository *LinkRepository) CreateWithContext(ctx context.Context, link models.Link) (*models.Link, error) {
 	statement := "insert into links (url, user_id) values($1, $2) returning id, created"
+	err := repository.db.QueryRowContext(ctx, statement, link.URL, link.UserID).Scan(&link.ID, &link.Created)
 
-	err := l.db.QueryRowContext(ctx, statement, link.URL, link.UserID).Scan(&link.ID, &link.Created)
+	if err != nil {
+		return nil, err
+	}
 
-	return link, err
+	return &link, nil
 }
 
-// NewLinkRepository creates LinkRepository repository
-func NewLinkRepository(db *sql.DB) LinkRepository {
-	return LinkRepository{db}
+func (repository *LinkRepository) Delete(link models.Link) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	return repository.DeleteWithContext(ctx, link)
 }
 
-// GetUserLinks returns user's links
-func (l *LinkRepository) GetUserLinks(ctx context.Context, user models.User, opts options.Options) ([]models.Link, error) {
+func (repository *LinkRepository) DeleteWithContext(ctx context.Context, link models.Link) error {
+	statement := "delete from links where id = $1"
+
+	result, err := repository.db.ExecContext(ctx, statement, link.ID)
+
+	spew.Dump(result)
+
+	return err
+}
+
+// FindAllByUser returns user's links
+func (repository *LinkRepository) FindAllByUser(user models.User, opts options.Options) ([]*models.Link, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	return repository.FindAllByUserWithContext(ctx, user, opts)
+}
+
+// FindAllByUserWithContext returns user's links
+func (repository *LinkRepository) FindAllByUserWithContext(ctx context.Context, user models.User, opts options.Options) ([]*models.Link, error) {
 	statement := `
 		select l.id, l.url, l.created, count(u.id) as usagesCount
 		from links l
@@ -40,11 +111,7 @@ func (l *LinkRepository) GetUserLinks(ctx context.Context, user models.User, opt
 		offset $3
 		`
 
-	spew.Dump("user", user)
-	spew.Dump("options", opts)
-	rows, err := l.db.QueryContext(ctx, statement, user.ID, opts.Limit, opts.Offset)
-
-	spew.Dump("err 111", err)
+	rows, err := repository.db.QueryContext(ctx, statement, user.ID, opts.Limit, opts.Offset)
 
 	if err != nil {
 		return nil, err
@@ -52,16 +119,14 @@ func (l *LinkRepository) GetUserLinks(ctx context.Context, user models.User, opt
 
 	defer rows.Close()
 
-	var links []models.Link
+	var links []*models.Link
 
 	for rows.Next() {
 		var link models.Link
 
 		if err = rows.Scan(&link.ID, &link.URL, &link.Created, &link.UsagesCount); err == nil {
-			spew.Dump("link", link)
-			links = append(links, link)
+			links = append(links, &link)
 		} else {
-			spew.Dump("wtf", err)
 			return nil, err
 		}
 	}
@@ -69,23 +134,22 @@ func (l *LinkRepository) GetUserLinks(ctx context.Context, user models.User, opt
 	return links, nil
 }
 
-// GetLinksCountForUser return total count of user's links
-func (l *LinkRepository) GetLinksCountForUser(ctx context.Context, user models.User) (int64, error) {
-	var count int64
-	statement := "select count(*) from links where user_id = $1"
-	err := l.db.QueryRowContext(ctx, statement, user.ID).Scan(&count)
-	return count, err
+// FindByID returns link by link id
+func (repository *LinkRepository) FindByID(link models.Link) (*models.Link, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	return repository.FindByIDWithContext(ctx, link)
 }
 
-// FindByID returns link by link id
-func (l *LinkRepository) FindByID(ctx context.Context, link models.Link) (models.Link, error) {
+// FindByIDWithContext returns link by link id
+func (repository *LinkRepository) FindByIDWithContext(ctx context.Context, link models.Link) (*models.Link, error) {
 	statement := "select id, url, created from links where id = $1"
-
-	err := l.db.QueryRowContext(ctx, statement, link.ID).Scan(
+	err := repository.db.QueryRowContext(ctx, statement, link.ID).Scan(
 		&link.ID,
 		&link.URL,
 		&link.Created,
 	)
 
-	return link, err
+	return &link, err
 }

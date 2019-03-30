@@ -16,7 +16,7 @@ create table if not exists links (
   user_id uuid not null,
 
   primary key(id),
-  constraint links_user_id foreign key (user_id) references users(id)
+  constraint links_user_id foreign key (user_id) references users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 create table if not exists usages (
@@ -26,7 +26,7 @@ create table if not exists usages (
   link_id uuid not null,
 
   primary key(id),
-  constraint usages_link_id foreign key (link_id) references links(id)
+  constraint usages_link_id foreign key (link_id) references links(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 insert into users (login, password) values('anon', '');

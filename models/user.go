@@ -15,7 +15,7 @@ type User struct {
 	ID         string    `json:"id"`
 	Created    time.Time `json:"created"`
 	LinksCount int64     `json:"linksCount"`
-	Links      []Link    `json:"links,omitempty"`
+	Links      []*Link   `json:"links,omitempty"`
 }
 
 // NewUserFromRequest creates new user fields from request.

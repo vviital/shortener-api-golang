@@ -12,7 +12,7 @@ import (
 
 // UserController struct represents user controller
 type UserController struct {
-	userRepository repository.UserRepository
+	userRepository repository.UserRepositoryInterface
 }
 
 // NewUserController func returns UserController object
@@ -40,16 +40,17 @@ func (controller *UserController) Create(w http.ResponseWriter, r *http.Request)
 
 	user.Password, err = crypto.CreatePassword(user.Password)
 
-	user, err = controller.userRepository.Create(ctx, user)
+	createdUser, err := controller.userRepository.CreateWithContext(ctx, user)
 
 	if err != nil {
 		utils.RespondWithError(&w, http.StatusBadRequest, models.NewError(err.Error()))
 		return
 	}
 
-	utils.RespondWithJSON(&w, http.StatusCreated, user)
+	utils.RespondWithJSON(&w, http.StatusCreated, *createdUser)
 }
 
+// Authorize user to get access
 func (controller *UserController) Authorize(w http.ResponseWriter, r *http.Request) {
 	var ctx context.Context
 
@@ -65,23 +66,23 @@ func (controller *UserController) Authorize(w http.ResponseWriter, r *http.Reque
 
 	defer cancel()
 
-	user, err = controller.userRepository.FindByLogin(ctx, user.Login)
+	foundUser, err := controller.userRepository.FindByLoginWithContext(ctx, user.Login)
 
 	if err != nil {
 		utils.RespondWithError(&w, http.StatusBadRequest, models.NewError(err.Error()))
 		return
 	}
 
-	ok := crypto.ValidatePassword(plainTextPassword, user.Password)
+	ok := crypto.ValidatePassword(plainTextPassword, foundUser.Password)
 
 	if !ok {
 		utils.RespondWithError(&w, http.StatusUnauthorized, models.Error{"User is not authorized"})
 		return
 	}
 
-	user.CleanPrivateFields()
+	foundUser.CleanPrivateFields()
 
-	token, err := models.GenerateAuthToken(user)
+	token, err := models.GenerateAuthToken(*foundUser)
 
 	utils.RespondWithJSON(&w, http.StatusOK, token)
 }

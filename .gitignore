@@ -1,2 +1,5 @@
 vendor
 .env
+coverage.out.html
+shortener
+*.out

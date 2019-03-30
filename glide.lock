@@ -1,5 +1,5 @@
-hash: 5ce66bc19c79d239d70b83e5cc4b8c372ba4ae2c4eba94ab376c3546a1ca5f78
-updated: 2019-03-22T14:14:22.327217+03:00
+hash: df1e1ceb8cc4a41d7dc58f916c60a556d35f75285b17bba789b11ea7a1c2dd8b
+updated: 2019-03-30T11:47:36.265426+03:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 8991bc29aa16c548c550c7ff78260e27b9ab7c73
@@ -22,6 +22,22 @@ imports:
   - oid
 - name: github.com/sirupsen/logrus
   version: dae0fa8d5b0c810a8ab733fbd5510c7cae84eca4
+- name: github.com/stretchr/testify
+  version: ffdc059bfe9ce6a4e144ba849dbedead332c6053
+  subpackages:
+  - assert
+  - require
 - name: github.com/subosito/gotenv
   version: 69b5b6104433beb2cb9c3ce00bdadf3c7c2d3f34
-testImports: []
+- name: github.com/teris-io/shortid
+  version: 6c56cef5189ca1b3d5ef01dc07f4d611dfc0bb33
+- name: golang.org/x/crypto
+  version: b7391e95e576cacdcdd422573063bc057239113d
+  subpackages:
+  - bcrypt
+  - blowfish
+testImports:
+- name: github.com/pmezard/go-difflib
+  version: 5d4384ee4fb2527b0a1256a821ebfc92f91efefc
+  subpackages:
+  - difflib

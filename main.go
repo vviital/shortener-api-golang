@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"shortener/configuration"
 	"shortener/driver"
+	"shortener/migrator"
 	"shortener/models"
 	"shortener/models/options"
 	"shortener/repository"
@@ -39,7 +40,7 @@ func anonUserMiddlewareGenerator(db *sql.DB) func(http.Handler) http.Handler {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	repository := repository.NewUserRepository(db)
-	anon, err := repository.FindByLogin(ctx, configuration.GetConfiguration().AnonUserLogin)
+	anon, err := repository.FindByLoginWithContext(ctx, configuration.GetConfiguration().AnonUserLogin)
 
 	if err != nil {
 		log.Fatalln(err)
@@ -47,14 +48,12 @@ func anonUserMiddlewareGenerator(db *sql.DB) func(http.Handler) http.Handler {
 
 	anonUserMiddleware := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			token, err := models.GenerateAuthToken(anon)
+			token, err := models.GenerateAuthToken(*anon)
 
 			if err != nil {
 				utils.RespondWithError(&w, http.StatusInternalServerError, models.Error{err.Error()})
 				return
 			}
-
-			spew.Dump("token", token)
 
 			r.Header.Add("Authorization", "Bearer "+token.Value)
 
@@ -101,7 +100,6 @@ func withAuth(next http.Handler) http.Handler {
 
 func withOptions(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("--- withOptions ---")
 		options := options.NewOptionsFromRequest(r)
 
 		spew.Dump(options)
@@ -120,7 +118,7 @@ func stop(err error) {
 func main() {
 	db := driver.ConnectPostgreSQL()
 
-	MigrateDatabase(db)
+	migrator.MigrateDatabase(db)
 
 	r := mux.NewRouter()
 

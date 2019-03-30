@@ -6,7 +6,6 @@ import (
 	"shortener/configuration"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -76,8 +75,6 @@ func (t *Token) GetClaims() (*Claims, error) {
 	if !ok {
 		return nil, errors.New("User claim is missing")
 	}
-
-	spew.Dump("rawUser", rawUser)
 
 	var user User
 
