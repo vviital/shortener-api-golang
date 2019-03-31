@@ -6,10 +6,16 @@ import (
 	"shortener/configuration"
 	"shortener/driver"
 	"shortener/migrator"
+	"shortener/repository"
 )
 
 const correctUrl = "postgres://postgres:postgres@localhost:5432/shortener-tests?sslmode=disable"
 
+type repositories struct {
+	usages repository.UsageRepositoryInterface
+	links  repository.LinksRepositoryInterface
+	users  repository.UserRepositoryInterface
+}
 type PostgresSuite struct {
 	db *sql.DB
 }

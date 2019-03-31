@@ -11,23 +11,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAnonUserLinks(t *testing.T) {
+func LinkTestSuite(t *testing.T, r *repositories) {
 	if testing.Short() {
 		t.Skip("Skip tests for links repository for unit tests")
 	}
 
-	var suite PostgresSuite
-	suite.SetupSuite()
-	defer suite.TearDownSuite()
-
-	linksRepository := repository.NewSQLLinkRepository(suite.db)
-	userRepository := repository.NewUserRepository(suite.db)
-
-	user, err := userRepository.FindByLogin("anon")
+	user, err := r.users.FindByLogin("anon")
 
 	require.Nil(t, err, "anon user should be found")
 
-	initialCount, err := linksRepository.CountByUser(*user)
+	initialCount, err := r.links.CountByUser(*user)
 
 	require.Nil(t, err, "initial count of links should be found without errors")
 
@@ -35,7 +28,7 @@ func TestAnonUserLinks(t *testing.T) {
 	var link2 *models.Link
 
 	t.Run("should create link for the anon user", func(t *testing.T) {
-		link1, err = linksRepository.Create(models.Link{URL: "example.com", UserID: user.ID})
+		link1, err = r.links.Create(models.Link{URL: "example.com", UserID: user.ID})
 
 		require.Nil(t, err, "link should be created")
 
@@ -44,7 +37,7 @@ func TestAnonUserLinks(t *testing.T) {
 	})
 
 	t.Run("should fetch link for the anon user", func(t *testing.T) {
-		link2, err = linksRepository.FindByID(models.Link{
+		link2, err = r.links.FindByID(models.Link{
 			ID: link1.ID,
 		})
 
@@ -56,7 +49,7 @@ func TestAnonUserLinks(t *testing.T) {
 	})
 
 	t.Run("should increment links count", func(t *testing.T) {
-		count, err := linksRepository.CountByUser(*user)
+		count, err := r.links.CountByUser(*user)
 
 		require.Nil(t, err, "count of links should be found without errors")
 
@@ -64,7 +57,7 @@ func TestAnonUserLinks(t *testing.T) {
 	})
 
 	t.Run("should return all user's links", func(t *testing.T) {
-		links, err := linksRepository.FindAllByUser(*user, options.Options{
+		links, err := r.links.FindAllByUser(*user, options.Options{
 			Limit:  1000,
 			Offset: 0,
 		})
@@ -75,12 +68,23 @@ func TestAnonUserLinks(t *testing.T) {
 	})
 
 	t.Run("should delete user's link", func(t *testing.T) {
-		err := linksRepository.Delete(*link1)
+		err := r.links.Delete(*link1)
 
 		require.Nil(t, err, "link should be deleted")
 
-		_, err = linksRepository.FindByID(*link1)
+		_, err = r.links.FindByID(*link1)
 
 		assert.Equal(t, sql.ErrNoRows, err, "should not find link by ID")
+	})
+}
+
+func TestLinksPostgres(t *testing.T) {
+	var suite PostgresSuite
+	suite.SetupSuite()
+	defer suite.TearDownSuite()
+
+	LinkTestSuite(t, &repositories{
+		links: repository.NewSQLLinkRepository(suite.db),
+		users: repository.NewUserRepository(suite.db),
 	})
 }

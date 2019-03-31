@@ -13,24 +13,17 @@ import (
 	"github.com/teris-io/shortid"
 )
 
-func TestUsersOperations(t *testing.T) {
+func UserTestSuite(t *testing.T, r *repositories) {
 	if testing.Short() {
 		t.Skip("Skip tests for user repository for unit tests")
 	}
 
-	var suite PostgresSuite
-	suite.SetupSuite()
-	defer suite.TearDownSuite()
 	user := new(models.User)
 	var err error
-	usages := repository.NewUsageRepository(suite.db)
-	links := repository.NewSQLLinkRepository(suite.db)
-	repository := repository.NewUserRepository(suite.db)
-
 	login, _ := shortid.Generate()
 
 	t.Run("should create new user", func(t *testing.T) {
-		user, err = repository.Create(models.User{
+		user, err = r.users.Create(models.User{
 			Login: login,
 		})
 
@@ -40,7 +33,7 @@ func TestUsersOperations(t *testing.T) {
 	})
 
 	t.Run("should throw an error when try to create user with the same login", func(t *testing.T) {
-		nilUser, err := repository.Create(models.User{
+		nilUser, err := r.users.Create(models.User{
 			Login:    login,
 			Password: "password",
 		})
@@ -51,32 +44,32 @@ func TestUsersOperations(t *testing.T) {
 	})
 
 	t.Run("should find user by login", func(t *testing.T) {
-		foundUser, err := repository.FindByLogin(user.Login)
+		foundUser, err := r.users.FindByLogin(user.Login)
 
 		require.Nil(t, err, "should find user by login without errors")
 		assert.Equal(t, user, foundUser, "user should be found correctly")
 	})
 
 	t.Run("should find user by ID", func(t *testing.T) {
-		foundUser, err := repository.FindByID(user.ID, options.Options{})
+		foundUser, err := r.users.FindByID(user.ID, options.Options{})
 
 		require.Nil(t, err, "should find user by ID without errors")
 		assert.Equal(t, user, foundUser, "user should be found correctly")
 	})
 
 	t.Run("should fetch user with links and usages count", func(t *testing.T) {
-		link, err := links.Create(models.Link{
+		link, err := r.links.Create(models.Link{
 			UserID: user.ID,
 			URL:    "https://example.com",
 		})
 		require.Nil(t, err)
 
 		for range make([]struct{}, 10) {
-			_, err := usages.Create(link.ID)
+			_, err := r.usages.Create(link.ID)
 			assert.Nil(t, err)
 		}
 
-		foundUser, err := repository.FindByID(user.ID, options.Options{
+		foundUser, err := r.users.FindByID(user.ID, options.Options{
 			Limit: 25,
 		})
 
@@ -89,19 +82,31 @@ func TestUsersOperations(t *testing.T) {
 	})
 
 	t.Run("should delete user", func(t *testing.T) {
-		err = repository.Delete(*user)
+		err = r.users.Delete(*user)
 
 		assert.Nil(t, err, "should delete user without errors")
 
-		foundUser, err := repository.FindByID(user.ID, options.Options{})
+		foundUser, err := r.users.FindByID(user.ID, options.Options{})
 
 		assert.Nil(t, foundUser, "found user should be nil")
 		assert.Equal(t, sql.ErrNoRows, err)
 	})
 
 	t.Run("should throw an error when try to delete nonexisting user", func(t *testing.T) {
-		err = repository.Delete(*user)
+		err = r.users.Delete(*user)
 
 		assert.Equal(t, sql.ErrNoRows, err, "should throw an error when try to delete the nonexisting user")
+	})
+}
+
+func TestUsersPostgres(t *testing.T) {
+	var suite PostgresSuite
+	suite.SetupSuite()
+	defer suite.TearDownSuite()
+
+	UserTestSuite(t, &repositories{
+		usages: repository.NewUsageRepository(suite.db),
+		links:  repository.NewSQLLinkRepository(suite.db),
+		users:  repository.NewUserRepository(suite.db),
 	})
 }
