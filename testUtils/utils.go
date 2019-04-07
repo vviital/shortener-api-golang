@@ -1,4 +1,4 @@
-package repository_test
+package testutils
 
 import (
 	"database/sql"
@@ -11,15 +11,23 @@ import (
 
 const correctUrl = "postgres://postgres:postgres@localhost:5432/shortener-tests?sslmode=disable"
 
-type repositories struct {
-	usages repository.UsageRepositoryInterface
-	links  repository.LinksRepositoryInterface
-	users  repository.UserRepositoryInterface
+type Repositories struct {
+	Usages repository.UsageRepositoryInterface
+	Links  repository.LinksRepositoryInterface
+	Users  repository.UserRepositoryInterface
 }
+
+// PostgresSuite struct is used to automate logic to work with postgres database in tests
 type PostgresSuite struct {
 	db *sql.DB
 }
 
+// GetDB returns connection to the DB
+func (s *PostgresSuite) GetDB() *sql.DB {
+	return s.db
+}
+
+// SetupSuite create connections to the database and apply migrations
 func (s *PostgresSuite) SetupSuite() {
 	os.Setenv("SQL_DB_URL", correctUrl)
 	configuration.Reload()
@@ -27,6 +35,7 @@ func (s *PostgresSuite) SetupSuite() {
 	migrator.MigrateDatabaseFromDirectory(s.db, "../migrations", 1)
 }
 
+// TearDownSuite destroy connections
 func (s *PostgresSuite) TearDownSuite() {
 	s.db.Close()
 }
