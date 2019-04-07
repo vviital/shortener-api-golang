@@ -24,6 +24,7 @@ import (
 )
 
 const Authorization = "Authorization"
+const address = "127.0.0.1:8000"
 
 func isAuthorizedRoute(r *http.Request, rm *mux.RouteMatch) bool {
 	value := r.Header.Get(Authorization)
@@ -115,6 +116,24 @@ func stop(err error) {
 	}
 }
 
+func startServer(r *mux.Router) chan error {
+	var errs chan error
+
+	go func() {
+		srv := &http.Server{
+			Handler:      r,
+			Addr:         address,
+			WriteTimeout: 15 * time.Second,
+			ReadTimeout:  15 * time.Second,
+		}
+
+		err := srv.ListenAndServe()
+		errs <- err
+	}()
+
+	return errs
+}
+
 func main() {
 	db := driver.ConnectPostgreSQL()
 
@@ -138,12 +157,7 @@ func main() {
 
 	stop(err)
 
-	srv := &http.Server{
-		Handler:      r,
-		Addr:         "127.0.0.1:8000",
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
-	}
-
-	srv.ListenAndServe()
+	errs := startServer(r)
+	log.Println("server started on", address)
+	log.Fatalln(<-errs)
 }
