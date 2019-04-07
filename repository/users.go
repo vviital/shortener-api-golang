@@ -147,6 +147,7 @@ func (repository *UserRepository) FindByLogin(login string) (*models.User, error
 // FindByLoginWithContext returns user by login. This method is used only for Login action.
 func (repository *UserRepository) FindByLoginWithContext(ctx context.Context, login string) (*models.User, error) {
 	var user models.User
+	user.Links = make([]*models.Link, 0)
 
 	statement := "select id, login, password, created from users where login = $1"
 

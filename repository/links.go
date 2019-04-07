@@ -115,7 +115,7 @@ func (repository *LinkRepository) FindAllByUserWithContext(ctx context.Context, 
 
 	defer rows.Close()
 
-	var links []*models.Link
+	links := make([]*models.Link, 0)
 
 	for rows.Next() {
 		var link models.Link

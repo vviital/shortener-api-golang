@@ -26,6 +26,7 @@ func UserTestSuite(t *testing.T, r *testutils.Repositories) {
 	t.Run("should create new user", func(t *testing.T) {
 		user, err = r.Users.Create(models.User{
 			Login: login,
+			Links: make([]*models.Link, 0),
 		})
 
 		require.Nil(t, err, "should create user without errors")
@@ -37,6 +38,7 @@ func UserTestSuite(t *testing.T, r *testutils.Repositories) {
 		nilUser, err := r.Users.Create(models.User{
 			Login:    login,
 			Password: "password",
+			Links:    make([]*models.Link, 0),
 		})
 
 		// TODO: add custom error for such case

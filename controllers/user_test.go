@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type testResult struct {
+type userTestResult struct {
 	code     int
 	hasToken bool
 }
@@ -49,11 +49,11 @@ func CreateUser(controller controllers.UserController, t *testing.T) []controlle
 		login          string
 		password       string
 		name           string
-		expectedResult testResult
+		expectedResult userTestResult
 	}{
-		{users[0], "superman", "should create a user", testResult{201, false}},
-		{users[0], "batman", "should thrown an error because user exists", testResult{400, false}},
-		{users[1], "spiderman", "should create one more user", testResult{201, false}},
+		{users[0], "superman", "should create a user", userTestResult{201, false}},
+		{users[0], "batman", "should thrown an error because user exists", userTestResult{400, false}},
+		{users[1], "spiderman", "should create one more user", userTestResult{201, false}},
 	}
 	var userRequests []controllers.UserRequest
 
@@ -83,10 +83,10 @@ func AuthorizeUser(controller controllers.UserController, t *testing.T, user con
 	tests := []struct {
 		request        controllers.UserRequest
 		name           string
-		expectedResult testResult
+		expectedResult userTestResult
 	}{
-		{user, "should authorize user", testResult{http.StatusOK, true}},
-		{controllers.UserRequest{user.Login, user.Password + user.Password}, "should throw an error is user has wrong credentials", testResult{http.StatusUnauthorized, false}},
+		{user, "should authorize user", userTestResult{http.StatusOK, true}},
+		{controllers.UserRequest{user.Login, user.Password + user.Password}, "should throw an error is user has wrong credentials", userTestResult{http.StatusUnauthorized, false}},
 	}
 
 	for _, test := range tests {

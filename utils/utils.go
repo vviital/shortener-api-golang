@@ -2,12 +2,14 @@ package utils
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"shortener/models"
 )
 
 // RespondWithError send an error to the client
 func RespondWithError(w *http.ResponseWriter, status int, err models.Error) {
+	log.Println(err)
 	(*w).Header().Add("Content-Type", "application/json")
 	(*w).WriteHeader(status)
 	json.NewEncoder(*w).Encode(err)
