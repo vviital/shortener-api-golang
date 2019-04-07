@@ -12,6 +12,9 @@ import (
 	testutils "shortener/testUtils"
 	"sort"
 	"testing"
+	"time"
+
+	"github.com/gorilla/mux"
 
 	"github.com/stretchr/testify/assert"
 
@@ -43,6 +46,8 @@ func TestLinkFlows(t *testing.T) {
 
 	links := CreateLinks(controller, t, user)
 	FetchLinks(controller, t, user, links)
+	FetchLinksByIds(controller, t, links)
+	FetchLinks(controller, t, user, links)
 }
 
 func AcquireUser(suite testutils.PostgresSuite) models.User {
@@ -64,7 +69,7 @@ func AcquireUser(suite testutils.PostgresSuite) models.User {
 	return *user
 }
 
-func CreateLinks(controller controllers.LinkController, t *testing.T, user models.User) []models.Link {
+func CreateLinks(controller controllers.LinkController, t *testing.T, user models.User) []*models.Link {
 	tests := []struct {
 		link string
 		name string
@@ -77,7 +82,7 @@ func CreateLinks(controller controllers.LinkController, t *testing.T, user model
 		{links[1], "should create link " + links[1], http.StatusCreated},
 		{links[2], "should create link " + links[2], http.StatusCreated},
 	}
-	var linksResponses []models.Link
+	var linksResponses []*models.Link
 
 	for _, test := range tests {
 		test := test
@@ -101,7 +106,7 @@ func CreateLinks(controller controllers.LinkController, t *testing.T, user model
 
 			json.NewDecoder(response.Body).Decode(&createdLink)
 
-			linksResponses = append(linksResponses, *createdLink)
+			linksResponses = append(linksResponses, createdLink)
 		})
 	}
 
@@ -112,10 +117,10 @@ func CreateLinks(controller controllers.LinkController, t *testing.T, user model
 	return linksResponses
 }
 
-func FetchLinks(controller controllers.LinkController, t *testing.T, user models.User, links []models.Link) {
+func FetchLinks(controller controllers.LinkController, t *testing.T, user models.User, links []*models.Link) {
 	tests := []struct {
 		name   string
-		links  []models.Link
+		links  []*models.Link
 		limit  int
 		offset int
 		code   int
@@ -124,7 +129,7 @@ func FetchLinks(controller controllers.LinkController, t *testing.T, user models
 		{"should return first three links", links[:3], 3, 0, 200},
 		{"should return links from second to the fourth", links[1:4], 3, 1, 200},
 		{"should return all links from third", links[2:], 25, 2, 200},
-		{"should return empty array", []models.Link{}, 25, 25, 200},
+		{"should return empty array", []*models.Link{}, 25, 25, 200},
 	}
 
 	for _, test := range tests {
@@ -151,10 +156,49 @@ func FetchLinks(controller controllers.LinkController, t *testing.T, user models
 
 			require.NotNil(t, values)
 			require.Len(t, *values, len(test.links))
+			assert.Equal(t, http.StatusOK, response.StatusCode)
 			for index, link := range test.links {
 				assert.Equal(t, link.ID, (*values)[index].ID)
 				assert.Equal(t, link.URL, (*values)[index].URL)
+				assert.Equal(t, link.UsagesCount, (*values)[index].UsagesCount)
 			}
 		})
 	}
+}
+
+func FetchLinksByIds(controller controllers.LinkController, t *testing.T, links []*models.Link) {
+	tests := make([]struct {
+		name string
+		code int
+		link *models.Link
+	}, 0)
+
+	for _, link := range links {
+		tests = append(tests, struct {
+			name string
+			code int
+			link *models.Link
+		}{"should fetch link by ID: " + link.ID, 200, link})
+	}
+
+	for _, test := range tests {
+		test := test
+
+		t.Run(test.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodGet, "/test", nil)
+			r = mux.SetURLVars(r, map[string]string{
+				"id": test.link.ID,
+			})
+			method := controller.FetchByID
+
+			method(w, r)
+
+			assert.Equal(t, test.link.URL, w.Header().Get("Location"))
+			test.link.UsagesCount++
+		})
+	}
+
+	// Sleep for one second to update usages count
+	time.Sleep(time.Second)
 }

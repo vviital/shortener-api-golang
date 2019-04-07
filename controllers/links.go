@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"context"
 	"database/sql"
 	"log"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 	"shortener/repository"
 	"shortener/utils"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/mux"
 )
 
@@ -44,6 +44,7 @@ func (controller *LinkController) List(w http.ResponseWriter, r *http.Request) {
 
 // FetchByID redirects user to the link
 func (controller *LinkController) FetchByID(w http.ResponseWriter, r *http.Request) {
+	spew.Dump("--- mux.Vars(r) ---", mux.Vars(r))
 	id, ok := mux.Vars(r)["id"]
 
 	if !ok {
@@ -59,9 +60,7 @@ func (controller *LinkController) FetchByID(w http.ResponseWriter, r *http.Reque
 	}
 
 	go func() {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		_, err := controller.usageRepository.CreateWithContext(ctx, link.ID)
+		_, err := controller.usageRepository.Create(link.ID)
 		if err != nil {
 			log.Println("--- error ---", err)
 		}
