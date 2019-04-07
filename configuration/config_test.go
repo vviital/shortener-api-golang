@@ -1,7 +1,7 @@
 package configuration_test
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"shortener/configuration"
 	"strconv"
@@ -14,7 +14,7 @@ const anonLogin = "anon_login"
 const tokenTTL = 30000
 
 func init() {
-	fmt.Println("setting env")
+	log.Println("setting env")
 	os.Setenv("SQL_DB_URL", sqlURL)
 	os.Setenv("JWT_TOKEN_SECRET", jwtToken)
 	os.Setenv("ANON_USER_LOGIN", anonLogin)

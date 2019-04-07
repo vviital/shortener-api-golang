@@ -8,7 +8,10 @@ unit-test:
 	@go test shortener/... -cover -covermode atomic -cpu 1,2,4 -parallel 1 -short
 
 integration-test:
-	@go test shortener/... -cover -covermode atomic -cpu 1,2,4 -parallel 1
+	@go test shortener/... -cover -covermode atomic
+
+integration-test-debug:
+	@go test shortener/... -v -cover -covermode atomic		
 
 build:
 	@go build

@@ -8,8 +8,6 @@ import (
 	"shortener/models"
 	"shortener/models/options"
 	"strings"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 // UserRepository type represent repository to work with UserRepository
@@ -203,7 +201,6 @@ func (repository *UserRepository) fetchAdditionalFieldsForUser(ctx context.Conte
 
 	go func() {
 		l, e := repository.links.FindAllByUserWithContext(ctx, *user, opts)
-		spew.Dump(opts)
 		links = l
 		handlerSubRequestError(e)
 	}()

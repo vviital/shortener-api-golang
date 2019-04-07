@@ -10,8 +10,6 @@ import (
 	"shortener/repository"
 	"shortener/utils"
 
-	"github.com/davecgh/go-spew/spew"
-
 	"github.com/gorilla/mux"
 )
 
@@ -33,8 +31,6 @@ func NewLinkController(db *sql.DB) LinkController {
 func (controller *LinkController) List(w http.ResponseWriter, r *http.Request) {
 	opts := options.NewOptionsFromContext(r.Context())
 	user, _ := models.NewUserFromContext(r.Context())
-
-	spew.Dump("r.Context()", r.Context())
 
 	links, err := controller.linkRepository.FindAllByUserWithContext(r.Context(), *user, *opts)
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"regexp"
@@ -17,8 +16,6 @@ import (
 	"shortener/routes"
 	"shortener/utils"
 	"time"
-
-	"github.com/davecgh/go-spew/spew"
 
 	"github.com/gorilla/mux"
 )
@@ -33,7 +30,6 @@ func isAuthorizedRoute(r *http.Request, rm *mux.RouteMatch) bool {
 }
 
 func isAnonRoute(r *http.Request, rm *mux.RouteMatch) bool {
-	fmt.Println("anon route")
 	return !isAuthorizedRoute(r, rm)
 }
 
@@ -102,8 +98,6 @@ func withAuth(next http.Handler) http.Handler {
 func withOptions(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		options := options.NewOptionsFromRequest(r)
-
-		spew.Dump(options)
 
 		ctx := context.WithValue(r.Context(), "options", options)
 		next.ServeHTTP(w, r.WithContext(ctx))

@@ -15,6 +15,12 @@ type UserController struct {
 	userRepository repository.UserRepositoryInterface
 }
 
+// UserRequest represents object of user request
+type UserRequest struct {
+	Login    string `json:"login"`
+	Password string `json:"password"`
+}
+
 // NewUserController func returns UserController object
 func NewUserController(db *sql.DB) UserController {
 	controller := UserController{
@@ -52,8 +58,6 @@ func (controller *UserController) Create(w http.ResponseWriter, r *http.Request)
 
 // Authorize user to get access
 func (controller *UserController) Authorize(w http.ResponseWriter, r *http.Request) {
-	var ctx context.Context
-
 	user, err := models.NewUserFromRequest(r)
 	plainTextPassword := user.Password
 
@@ -62,11 +66,7 @@ func (controller *UserController) Authorize(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	ctx, cancel := context.WithCancel(r.Context())
-
-	defer cancel()
-
-	foundUser, err := controller.userRepository.FindByLoginWithContext(ctx, user.Login)
+	foundUser, err := controller.userRepository.FindByLoginWithContext(r.Context(), user.Login)
 
 	if err != nil {
 		utils.RespondWithError(&w, http.StatusBadRequest, models.NewError(err.Error()))

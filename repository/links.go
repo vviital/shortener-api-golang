@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"shortener/models"
 	"shortener/models/options"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 // LinksRepositoryInterface interface
@@ -82,9 +80,7 @@ func (repository *LinkRepository) Delete(link models.Link) error {
 func (repository *LinkRepository) DeleteWithContext(ctx context.Context, link models.Link) error {
 	statement := "delete from links where id = $1"
 
-	result, err := repository.db.ExecContext(ctx, statement, link.ID)
-
-	spew.Dump(result)
+	_, err := repository.db.ExecContext(ctx, statement, link.ID)
 
 	return err
 }
